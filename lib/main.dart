@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:usb_thermal_printer_web/usb_thermal_printer_web.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,18 +12,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'USB Thermal Printer TestApp',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'USB Thermal Printer TestApp'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
+
   final String title;
 
   @override
@@ -30,12 +32,32 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final WebThermalPrinter _printer = WebThermalPrinter();
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  void printReceiptTest() async {
+    //Pairing Device is required.
+    await _printer.pairDevice(vendorId: 0x6868, productId: 0x0200);
+
+    await _printer.printText('DKT Mart', bold: true, centerAlign: true);
+    await _printer.printEmptyLine();
+
+    await _printer.printRow("Products", "Sale");
+    await _printer.printEmptyLine();
+
+    for (int i = 0; i < 10; i++) {
+      await _printer.printRow(
+          'A big title very big title ${i + 1}', '${(i + 1) * 510}.00 AED');
+      await _printer.printEmptyLine();
+    }
+
+    await _printer.printDottedLine();
+    await _printer.printEmptyLine();
+
+    await _printer.printBarcode('123456');
+    await _printer.printEmptyLine();
+
+    await _printer.printEmptyLine();
+    await _printer.closePrinter();
   }
 
   @override
@@ -48,22 +70,14 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            ElevatedButton(
+              onPressed: printReceiptTest,
+              child: const Text('Print'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
